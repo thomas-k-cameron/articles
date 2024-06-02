@@ -1,0 +1,14 @@
+[package]
+name = "optimizing-serde-slash-rust-match-statement"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+criterion = "0.5.1"
+uuid = { version = "1.8.0", features = ["v4"] }
+
+
+
+[[bench]]
+name = "benchmark"
+harness = false
