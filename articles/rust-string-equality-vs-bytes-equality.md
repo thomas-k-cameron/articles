@@ -1,11 +1,7 @@
 # Optimizing Serde or Rust lang's match statement for compile time known strings
 
-## Benchmark
-
-Take a look at an example below.
-These are two identical function, and it pretty much does the same thing.
-
-However, `bytes_match` will be faster when you take a benchmark.
+These two functions are identical, and it pretty much does the same thing.
+However, `bytes_match` is more likely to be faster when you measure the performance.
 
 ```rust
 
@@ -30,54 +26,28 @@ fn bytes_match(s: &str) -> i64
 }
 ```
 
+
+I created a benchmark with 1,000 match arm to see the difference and here is the result.
+
 ## So why is this the case?  
 
-Rust's string comparison is quite different from C lang's `strcmp`.
-Let's take a look at CFG of generated assembly code.
-e.g.
+When Rust checks the equality of a `String`, it checks whether each and every byte before it finally decides whether the two value is equal or not.
+
+However, when Rust checks the equality of bytes, Rust will conclude that two values aren't equal as soon as it finds a mismatching byte.
+
+Let's take a look at the CFG of generated assembly code.
 
 ```asm
 
 ```
 
-- Clang checks byte-by-byte but Rust is byte-packed
-- Rust tries to load data from memory on every attempt to do an equality check.
-- Clang breaks as soon as it finds a un-equal byte but Rust doesn't break until it finish checking every byte
+## Does it matter?
 
-By the way, Rust's `[u8]`'s equality check's implementation is the same as `strcmnp`.
-e.g.
+I think the performance difference is negligible in many cases but I think it matters.
 
-```asm
+Rust is a language that has a lots of compiled-time known string thanks to `serde`.
+Serde generates a match statement which a match arm to parse the value for each field.  
 
-```
+I think it is more likely that Rust's string comparison will evaluate to false.
 
-
-## So rust has lots of compile-time known strings
-
-Thanks to `serde` crate, Rust can have a lot of comparison of compile-time known strings.
-
-e.g.
-
-```rust
-match some_str {
-    "thing" => 1,
-    "stuff" => 2,
-    "these" => 3,
-    _ => -1 // lol
-}
-```
-
-Under the hood, Rust compiles this into a large if-else ladder, where it loads pieces of data everytime a block is executed.  
-
-Modern CPU has big CPU cache and these memory loads should be cached and the performance impact might be negligible.  
-However, these can affect the performance significantly, especially on micro-controlers and less-powerful chips.
-
-Even on powerful CPUs I think it can start to make a difference on memory-heavy applications.
-
-## Is Clang implementation superior?
-
-Let's take a benchmark.  
-
-If C lang's implementation is
-
-I have
+Although Rust will not compare the content of string unless it has the same length it will add up.
