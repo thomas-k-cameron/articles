@@ -1,5 +1,7 @@
 # Optimizing Serde or Rust lang's match statement for compile time known strings
 
+Here are two functions. 
+One matches against 
 These two functions are identical, and it pretty much does the same thing.
 However, `bytes_match` is more likely to be faster when you measure the performance.
 
